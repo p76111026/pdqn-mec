@@ -467,7 +467,7 @@ class PDQNAgent(Agent):
             Q_indexed = Q_val.gather(1, actions.unsqueeze(1))
             Q_loss = torch.mean(Q_indexed)
         else:
-            Q_loss = torch.mean(torch.sum(Q_val, 1))
+            Q_loss = -1*torch.mean(torch.sum(Q_val, 1))
         self.actor.zero_grad()
         Q_loss.backward()
         from copy import deepcopy
@@ -481,7 +481,7 @@ class PDQNAgent(Agent):
         #    delta_a[:] = self._zero_index_gradients(delta_a, batch_action_indices=actions, inplace=True)
 
         #out = -torch.mul(delta_a, action_params)
-        #self.actor_param.zero_grad()
+        self.actor_param.zero_grad()
         #out.backward(torch.ones(out.shape).to(self.device))
         #############
         if self.clip_grad > 0:
