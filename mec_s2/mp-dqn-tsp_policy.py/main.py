@@ -8,6 +8,7 @@ import networkx as nx
 from networkx.algorithms.approximation import traveling_salesman_problem, christofides
 import itertools
 import multiprocessing as mp
+#用於載入資料
 def load_obj(name):
     """
     Loads a pickle file object
@@ -16,7 +17,7 @@ def load_obj(name):
     """
     with open(name, 'rb') as f:
         return pickle.load(f)
-
+#根據 tsp 決定卸載策略
 def offloading_decision(decimal_number,tsp_path,edge_index):
     ternary_number = ""
     if decimal_number == 0:
@@ -35,12 +36,15 @@ def offloading_decision(decimal_number,tsp_path,edge_index):
 #     part_1 = ((edge_xs[edge_index_1] - edge_xs[edge_index_2])**2 + (edge_ys[edge_index_1] - edge_ys[edge_index_2])**2)**0.5
 #     part_2 = max(computing_speed[edge_index_1] / computing_speed[edge_index_2], computing_speed[edge_index_2] / computing_speed[edge_index_1])
 #     return part_1 + beta * part_2**-1
+
+#計算距離
 def distance(edge_xs,edge_ys,computing_speed,edge_index_1, edge_index_2, beta=1):
     part_1 = ((edge_xs[edge_index_1] - edge_xs[edge_index_2])**2 + (edge_ys[edge_index_1] - edge_ys[edge_index_2])**2)**0.5
     part_2 = min(computing_speed[edge_index_1] / computing_speed[edge_index_2], computing_speed[edge_index_2] / computing_speed[edge_index_1])
     normalize_part_1 = (part_1-1000)/(2000*1.44-1000)
     normalize_part_2 = (part_2-0.3)/(1-0.3)
     return normalize_part_1 + beta*normalize_part_2
+#找最短路徑
 def calculate_path(edge_xs,edge_ys,new_computing_speeds,perm):
     dist = 0
     for index in range(8):
@@ -182,16 +186,18 @@ def run(seed, episodes, batch_size, gamma, inverting_gradients, initial_memory_t
     pool = mp.Pool(mp.cpu_count())
     perms = list(itertools.permutations(range(9)))
     
+    #設置計算資源
     #new_computing_speeds = [3.0 * 1e9, 10.0 * 1e9, 3.0 * 1e9, 10.0 * 1e9, 6.0 * 1e9, 10.0 * 1e9, 3.0 * 1e9, 10.0 * 1e9, 3.0 * 1e9]
     new_computing_speeds = [10.0 * 1e9, 10.0 * 1e9, 10.0 * 1e9, 10.0 * 1e9, 6.0 * 1e9, 3.0 * 1e9, 3.0 * 1e9, 3.0 * 1e9, 3.0 * 1e9]
     #new_computing_speeds = [10.0 * 1e9, 10.0 * 1e9, 10.0 * 1e9, 10.0 * 1e9, 3.0 * 1e9, 3.0 * 1e9, 3.0 * 1e9, 3.0 * 1e9, 6.0 * 1e9]
     
-    
+    #求解 tsp
     results = pool.starmap(calculate_path, [(edge_xs, edge_ys, new_computing_speeds, perm) for perm in perms])
     tsp_val, tsp_path = min(results, key=lambda x: x[0])
     tsp_path = np.array(tsp_path)
     print(tsp_path) 
     
+    #開始訓練
     for episode_num in range(episodes):
         start = time.time()
         env._config.task_seed = episode_num
