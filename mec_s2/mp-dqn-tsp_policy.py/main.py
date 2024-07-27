@@ -21,7 +21,9 @@ def load_obj(name):
 def offloading_decision(decimal_number,tsp_path,edge_index):
     ternary_number = ""
     if decimal_number == 0:
-        return [0,0,0]
+        now_index = np.where(tsp_path == edge_index)[0]
+        now_index -= 1
+        return [tsp_path[(now_index)%9][0],tsp_path[(now_index)%9][0],tsp_path[(now_index)%9][0]]
     else:
         while decimal_number > 0:
             remainder = decimal_number % 3
